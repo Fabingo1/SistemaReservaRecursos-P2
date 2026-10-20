@@ -1,11 +1,12 @@
 package modelo;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-public class Reserva {
+public class Reserva implements Serializable {
     private String id;
     private String actividad;
     private Date fecha;
