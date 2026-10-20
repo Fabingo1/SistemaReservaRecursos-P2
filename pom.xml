@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>cr.ac.una.eif206</groupId>
-    <artifactId>SistemaReservaRecursos</artifactId>
+    <artifactId>SistemaReservaRecursos-P2</artifactId>
     <version>1.0</version>
     <packaging>jar</packaging>
 
