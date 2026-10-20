@@ -1,6 +1,8 @@
 package modelo;
 
-public class Recurso {
+import java.io.Serializable;
+
+public class Recurso implements Serializable {
     private String id;
     private Categoria categoria;
     private String descripcion;

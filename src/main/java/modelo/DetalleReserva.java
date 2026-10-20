@@ -1,6 +1,8 @@
 package modelo;
 
-public class DetalleReserva {
+import java.io.Serializable;
+
+public class DetalleReserva implements Serializable {
 
     private Categoria categoriaSolicitada;
     private Recurso recursoAsignado;

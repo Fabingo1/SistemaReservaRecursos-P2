@@ -3,9 +3,10 @@ package controladores;
 import modelo.Categoria;
 import modelo.Reserva;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class ResultadoReserva {
+public class ResultadoReserva implements Serializable {
     private final boolean exitosa;
     private final Reserva reserva;
     private final List<Categoria> categoriasNoDisponibles;
