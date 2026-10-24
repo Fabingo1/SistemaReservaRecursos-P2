@@ -36,3 +36,4 @@ target/
 data/*.xml
 data/*.pdf
 *.pdf
+config.properties
