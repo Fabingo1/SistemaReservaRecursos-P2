@@ -5,7 +5,6 @@ import controladores.ResultadoReserva;
 import modelo.Categoria;
 import modelo.Funcionario;
 import modelo.Reserva;
-import servicios.LLMService;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -19,8 +18,11 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
 
-// Las validaciones de negocio están en ReservaController; aquí solo se leen los campos y se muestran mensajes.
+// Las validaciones están en el Backend; aquí se leen los campos y se muestran mensajes.
+// Toda llamada al servidor va en segundo plano (enSegundoPlano) para no congelar la ventana.
 public class ReservaView extends JPanel implements Refrescable {
     private final ReservaController controller;
     private final Funcionario funcionarioActual;
@@ -50,9 +52,7 @@ public class ReservaView extends JPanel implements Refrescable {
         cargarMisReservas();
     }
 
-    // ------------------------------------------------------------------
-    // Interfaz
-    // ------------------------------------------------------------------
+    //Interfaz
     private JPanel construirPanelFormulario() {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBorder(BorderFactory.createTitledBorder("Nueva reserva"));
@@ -163,10 +163,7 @@ public class ReservaView extends JPanel implements Refrescable {
         return panel;
     }
 
-    // ------------------------------------------------------------------
-    // Acciones
-    // ------------------------------------------------------------------
-
+    //Acciones
     private void reservar() {
         String actividad = txtActividad.getText();
         List<Categoria> seleccionadas = listCategorias.getSelectedValuesList();
@@ -174,32 +171,29 @@ public class ReservaView extends JPanel implements Refrescable {
         Date horaInicio = (Date) spnHoraInicio.getValue();
         Date horaFin = (Date) spnHoraFin.getValue();
 
-        try {
-            ResultadoReserva resultado = controller.crearReserva(
-                    funcionarioActual, actividad, fecha, horaInicio, horaFin, seleccionadas);
+        enSegundoPlano(
+                () -> controller.crearReserva(funcionarioActual, actividad, fecha, horaInicio, horaFin, seleccionadas),
+                this::mostrarResultadoReserva,
+                "No se pudo reservar");
+    }
 
-            if (resultado.isExitosa()) {
-                JOptionPane.showMessageDialog(this,
-                        "Reserva creada: " + resultado.getReserva().getId()
-                                + "\nRecursos asignados: " + controller.textoRecursos(resultado.getReserva()),
-                        "Reserva exitosa", JOptionPane.INFORMATION_MESSAGE);
-                limpiarFormulario();
-                cargarMisReservas();
-            } else {
-                // No se limpia: el funcionario puede cambiar datos y reintentar.
-                StringBuilder mensaje = new StringBuilder("No hubo disponibilidad para:\n");
-                for (Categoria c : resultado.getCategoriasNoDisponibles()) {
-                    mensaje.append("- ").append(c.getDescripcion()).append("\n");
-                }
-                mensaje.append("\nPuede modificar la reserva e intentar de nuevo.");
-                JOptionPane.showMessageDialog(this, mensaje.toString(), "Sin disponibilidad",
-                        JOptionPane.WARNING_MESSAGE);
+    private void mostrarResultadoReserva(ResultadoReserva resultado) {
+        if (resultado.isExitosa()) {
+            JOptionPane.showMessageDialog(this,
+                    "Reserva creada: " + resultado.getReserva().getId()
+                            + "\nRecursos asignados: " + controller.textoRecursos(resultado.getReserva()),
+                    "Reserva exitosa", JOptionPane.INFORMATION_MESSAGE);
+            limpiarFormulario();
+            cargarMisReservas();
+        } else {
+            // No se limpia: el funcionario puede cambiar datos y reintentar.
+            StringBuilder mensaje = new StringBuilder("No hubo disponibilidad para:\n");
+            for (Categoria c : resultado.getCategoriasNoDisponibles()) {
+                mensaje.append("- ").append(c.getDescripcion()).append("\n");
             }
-        } catch (IllegalArgumentException e) {
-            JOptionPane.showMessageDialog(this, e.getMessage(), "Datos inválidos", JOptionPane.ERROR_MESSAGE);
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Error al guardar la reserva: " + e.getMessage(),
-                    "Error", JOptionPane.ERROR_MESSAGE);
+            mensaje.append("\nPuede modificar la reserva e intentar de nuevo.");
+            JOptionPane.showMessageDialog(this, mensaje.toString(), "Sin disponibilidad",
+                    JOptionPane.WARNING_MESSAGE);
         }
     }
 
@@ -217,16 +211,16 @@ public class ReservaView extends JPanel implements Refrescable {
             return;
         }
 
-        try {
-            controller.cancelarReserva(id, funcionarioActual);
-            JOptionPane.showMessageDialog(this, "Reserva " + id + " cancelada. Sus recursos quedaron libres.");
-            cargarMisReservas();
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            JOptionPane.showMessageDialog(this, e.getMessage(), "No se pudo cancelar", JOptionPane.WARNING_MESSAGE);
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Error al cancelar: " + e.getMessage(),
-                    "Error", JOptionPane.ERROR_MESSAGE);
-        }
+        enSegundoPlano(
+                () -> {
+                    controller.cancelarReserva(id, funcionarioActual);
+                    return null;
+                },
+                nada -> {
+                    JOptionPane.showMessageDialog(this, "Reserva " + id + " cancelada. Sus recursos quedaron libres.");
+                    cargarMisReservas();
+                },
+                "No se pudo cancelar");
     }
 
     private void extraerConIA() {
@@ -239,30 +233,19 @@ public class ReservaView extends JPanel implements Refrescable {
         btnExtraer.setEnabled(false);
         btnExtraer.setText("Extrayendo...");
 
-        List<String> nombresCategorias = new ArrayList<>();
-        for (int i = 0; i < modeloCategorias.size(); i++) {
-            nombresCategorias.add(modeloCategorias.get(i).getDescripcion());
-        }
+        enSegundoPlano(
+                () -> controller.extraerDatos(frase),
+                datos -> {
+                    restaurarBotonExtraer();
+                    aplicarDatosExtraidos(datos);
+                },
+                "No se pudo extraer la información",
+                this::restaurarBotonExtraer);
+    }
 
-        new SwingWorker<Map<String, String>, Void>() {
-            @Override
-            protected Map<String, String> doInBackground() throws Exception {
-                LLMService llmService = new LLMService();
-                return llmService.extraerDatos(frase, nombresCategorias);
-            }
-
-            @Override
-            protected void done() {
-                btnExtraer.setEnabled(true);
-                btnExtraer.setText("Extraer (IA)");
-                try {
-                    aplicarDatosExtraidos(get());
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(ReservaView.this,
-                            "No se pudo extraer la información: " + ex.getCause().getMessage());
-                }
-            }
-        }.execute();
+    private void restaurarBotonExtraer() {
+        btnExtraer.setEnabled(true);
+        btnExtraer.setText("Extraer (IA)");
     }
 
     private void aplicarDatosExtraidos(Map<String, String> datos) {
@@ -353,54 +336,97 @@ public class ReservaView extends JPanel implements Refrescable {
         listCategorias.clearSelection();
     }
 
-    // ------------------------------------------------------------------
     // Carga de datos
-    // ------------------------------------------------------------------
-
     @Override
     public void refrescar() {
-        List<Categoria> seleccion = listCategorias.getSelectedValuesList();
-        recargarCategorias();
-        // Volver a marcar las categorías que estaban seleccionadas
-        for (int i = 0; i < modeloCategorias.size(); i++) {
-            for (Categoria c : seleccion) {
-                if (c.getId().equals(modeloCategorias.get(i).getId())) {
-                    listCategorias.addSelectionInterval(i, i);
-                }
-            }
-        }
+        recargarCategorias(listCategorias.getSelectedValuesList());
         cargarMisReservas();
     }
 
     private void recargarCategorias() {
-        modeloCategorias.clear();
-        try {
-            for (Categoria c : controller.obtenerCategoriasDisponibles()) {
-                modeloCategorias.addElement(c);
-            }
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "No se pudieron cargar las categorías: " + e.getMessage());
-        }
+        recargarCategorias(new ArrayList<>());
+    }
+
+    /** Vuelve a marcar las categorías que estaban seleccionadas. */
+    private void recargarCategorias(List<Categoria> seleccionPrevia) {
+        enSegundoPlano(
+                controller::obtenerCategoriasDisponibles,
+                categorias -> {
+                    modeloCategorias.clear();
+                    for (Categoria c : categorias) {
+                        modeloCategorias.addElement(c);
+                    }
+                    for (int i = 0; i < modeloCategorias.size(); i++) {
+                        for (Categoria c : seleccionPrevia) {
+                            if (c.getId().equals(modeloCategorias.get(i).getId())) {
+                                listCategorias.addSelectionInterval(i, i);
+                            }
+                        }
+                    }
+                },
+                "No se pudieron cargar las categorías");
     }
 
     private void cargarMisReservas() {
-        try {
-            reservasMostradas = controller.obtenerReservasDe(funcionarioActual);
-            modeloTabla.setRowCount(0);
+        enSegundoPlano(
+                () -> controller.obtenerReservasDe(funcionarioActual),
+                this::mostrarReservas,
+                "No se pudieron cargar sus reservas");
+    }
 
-            SimpleDateFormat sdfFecha = new SimpleDateFormat("dd/MM/yyyy");
-            SimpleDateFormat sdfHora = new SimpleDateFormat("HH:mm");
+    private void mostrarReservas(List<Reserva> reservas) {
+        reservasMostradas = reservas;
+        modeloTabla.setRowCount(0);
 
-            for (Reserva r : reservasMostradas) {
-                String horario = sdfHora.format(r.getHoraInicio()) + " - " + sdfHora.format(r.getHoraFin());
-                modeloTabla.addRow(new Object[]{
-                        r.getId(), r.getActividad(), sdfFecha.format(r.getFecha()),
-                        horario, controller.textoRecursos(r), r.getEstado()
-                });
-            }
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "No se pudieron cargar sus reservas: " + e.getMessage());
+        SimpleDateFormat sdfFecha = new SimpleDateFormat("dd/MM/yyyy");
+        SimpleDateFormat sdfHora = new SimpleDateFormat("HH:mm");
+
+        for (Reserva r : reservasMostradas) {
+            String horario = sdfHora.format(r.getHoraInicio()) + " - " + sdfHora.format(r.getHoraFin());
+            modeloTabla.addRow(new Object[]{
+                    r.getId(), r.getActividad(), sdfFecha.format(r.getFecha()),
+                    horario, controller.textoRecursos(r), r.getEstado()
+            });
         }
+    }
+
+    // Llamadas al servidor en segundo plano
+    private interface Llamada<T> {
+        T ejecutar() throws Exception;
+    }
+
+    private <T> void enSegundoPlano(Llamada<T> llamada, Consumer<T> alTerminar, String tituloError) {
+        enSegundoPlano(llamada, alTerminar, tituloError, () -> { });
+    }
+
+    /** alFallar: algo extra que hacer si falla (ej. reactivar un botón). */
+    private <T> void enSegundoPlano(Llamada<T> llamada, Consumer<T> alTerminar, String tituloError,
+                                    Runnable alFallar) {
+        new SwingWorker<T, Void>() {
+            @Override
+            protected T doInBackground() throws Exception {
+                return llamada.ejecutar();
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    alTerminar.accept(get());
+                } catch (ExecutionException ex) {
+                    alFallar.run();
+                    mostrarError(tituloError, ex.getCause());
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }.execute();
+    }
+
+    /** Validaciones como aviso; lo demás como error. */
+    private void mostrarError(String titulo, Throwable causa) {
+        boolean esValidacion = causa instanceof IllegalArgumentException || causa instanceof IllegalStateException;
+        JOptionPane.showMessageDialog(this, causa.getMessage(), titulo,
+                esValidacion ? JOptionPane.WARNING_MESSAGE : JOptionPane.ERROR_MESSAGE);
     }
 
     private static class EstadoCellRenderer extends javax.swing.table.DefaultTableCellRenderer {

@@ -8,11 +8,10 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-// El id queda bloqueado al seleccionar un funcionario existente (FuncionarioController no lo deja cambiar).
+// El id queda bloqueado al seleccionar un funcionario existente (no se puede cambiar).
 // Búsqueda: si el campo Id tiene texto se usa ese; si no, se busca por nombre.
 public class FuncionarioView extends JPanel implements Refrescable {
 
@@ -55,7 +54,7 @@ public class FuncionarioView extends JPanel implements Refrescable {
         buscar();
     }
 
-    // ---------- Construcción de paneles ----------
+    //Construcción de paneles
 
     private JPanel crearPanelBusqueda() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
@@ -159,7 +158,7 @@ public class FuncionarioView extends JPanel implements Refrescable {
         return scroll;
     }
 
-    // ---------- Acciones ----------
+    //Acciones
 
     @Override
     public void refrescar() {
@@ -172,7 +171,7 @@ public class FuncionarioView extends JPanel implements Refrescable {
                     ? txtBusquedaId.getText()
                     : txtBusquedaNombre.getText();
             cargarTabla(controller.buscar(texto));
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             mostrarError("Error al buscar funcionarios", ex);
         }
     }
@@ -187,16 +186,16 @@ public class FuncionarioView extends JPanel implements Refrescable {
                 limpiar();
                 buscar();
                 JOptionPane.showMessageDialog(this,
-                        "Funcionario creado.\nClave inicial: " + creado.getClave()
+                        "Funcionario creado.\nClave inicial: " + creado.getId() + " (igual al id)"
                                 + "\n(comuníquesela para que la cambie en su primer ingreso)");
             } else {
                 controller.modificar(idSeleccionado, nombre, telefono);
                 limpiar();
                 buscar();
             }
-        } catch (IllegalArgumentException ex) {
+        } catch (IllegalArgumentException | IllegalStateException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Datos inválidos", JOptionPane.WARNING_MESSAGE);
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             mostrarError("Error al guardar el funcionario", ex);
         }
     }
@@ -218,9 +217,9 @@ public class FuncionarioView extends JPanel implements Refrescable {
             controller.borrar(idSeleccionado);
             limpiar();
             buscar();
-        } catch (IllegalArgumentException ex) {
+        } catch (IllegalArgumentException | IllegalStateException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "No se pudo borrar", JOptionPane.WARNING_MESSAGE);
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             mostrarError("Error al borrar el funcionario", ex);
         }
     }
@@ -254,7 +253,7 @@ public class FuncionarioView extends JPanel implements Refrescable {
 
             controller.generarReportePDF(resultadosActuales, ruta);
             JOptionPane.showMessageDialog(this, "Reporte generado en:\n" + ruta);
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             mostrarError("Error al generar el reporte PDF", ex);
         }
     }
@@ -277,8 +276,7 @@ public class FuncionarioView extends JPanel implements Refrescable {
         txtTelefono.setText(funcionario.getTelefono());
     }
 
-    // ---------- Utilidades ----------
-
+    //Utilidades
     private void cargarTabla(List<Funcionario> funcionarios) {
         resultadosActuales = funcionarios;
         modeloTabla.setRowCount(0);
@@ -289,16 +287,5 @@ public class FuncionarioView extends JPanel implements Refrescable {
 
     private void mostrarError(String titulo, Exception ex) {
         JOptionPane.showMessageDialog(this, ex.getMessage(), titulo, JOptionPane.ERROR_MESSAGE);
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Prueba Funcionarios");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(750, 550);
-            frame.add(new FuncionarioView());
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
-        });
     }
 }
