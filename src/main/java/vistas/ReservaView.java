@@ -239,11 +239,16 @@ public class ReservaView extends JPanel implements Refrescable {
         btnExtraer.setEnabled(false);
         btnExtraer.setText("Extrayendo...");
 
+        List<String> nombresCategorias = new ArrayList<>();
+        for (int i = 0; i < modeloCategorias.size(); i++) {
+            nombresCategorias.add(modeloCategorias.get(i).getDescripcion());
+        }
+
         new SwingWorker<Map<String, String>, Void>() {
             @Override
             protected Map<String, String> doInBackground() throws Exception {
                 LLMService llmService = new LLMService();
-                return llmService.extraerDatos(frase);
+                return llmService.extraerDatos(frase, nombresCategorias);
             }
 
             @Override
@@ -296,7 +301,7 @@ public class ReservaView extends JPanel implements Refrescable {
         for (int i = 0; i < modeloCategorias.size(); i++) {
             String descripcion = modeloCategorias.get(i).getDescripcion().toLowerCase();
             for (String palabra : palabrasClave) {
-                if (descripcion.contains(palabra.trim())) {
+                if (descripcion.equals(palabra.trim())) {
                     indicesAMarcar.add(i);
                     break;
                 }
