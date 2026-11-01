@@ -27,6 +27,8 @@ public class FuncionarioDAO extends BaseDAO {
             "UPDATE reserva SET funcionario_nombre = ?, funcionario_telefono = ? WHERE funcionario_id = ?";
     private static final String BORRAR =
             "DELETE FROM funcionario WHERE id = ?";
+    private static final String CAMBIAR_CLAVE =
+            "UPDATE funcionario SET clave = ? WHERE id = ?";
 
     /** Sin clave: es para mostrar en tablas. */
     public List<Funcionario> listar() throws SQLException {
@@ -100,6 +102,16 @@ public class FuncionarioDAO extends BaseDAO {
                 c.rollback();
                 throw e;
             }
+        }
+    }
+
+    /** Lo usa el cambio de clave (login). Devuelve false si no existe. */
+    public boolean cambiarClave(String id, String claveNueva) throws SQLException {
+        try (Connection c = conectar();
+             PreparedStatement ps = c.prepareStatement(CAMBIAR_CLAVE)) {
+            ps.setString(1, claveNueva);
+            ps.setString(2, id);
+            return ps.executeUpdate() > 0;
         }
     }
 

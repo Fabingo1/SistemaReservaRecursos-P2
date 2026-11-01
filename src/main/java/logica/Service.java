@@ -13,21 +13,23 @@ public class Service implements IService {
 
     private final ServicioFuncionarios funcionarios = new ServicioFuncionarios();
     private final ServicioReservas reservas = new ServicioReservas();
+    private final ServicioLogin login = new ServicioLogin();
+    private final ServicioCategorias categorias = new ServicioCategorias();
 
     // Login
     @Override
     public Usuario login(String id, String clave) throws Exception {
-        throw new UnsupportedOperationException("Pendiente: login");
+        return login.login(id, clave);
     }
 
     @Override
     public void cambiarClave(String id, String claveActual, String claveNueva) throws Exception {
-        throw new UnsupportedOperationException("Pendiente: cambiarClave");
+        login.cambiarClave(id, claveActual, claveNueva);
     }
 
     @Override
     public void logout() throws Exception {
-        throw new UnsupportedOperationException("Pendiente: logout");
+        // Nada que hacer aquí: la sesión la recuerda el hilo del servidor (Worker) y él la limpia
     }
 
     // Funcionarios
@@ -59,27 +61,27 @@ public class Service implements IService {
     // Categorías
     @Override
     public List<Categoria> listarCategorias() throws Exception {
-        throw new UnsupportedOperationException("Pendiente: listarCategorias");
+        return categorias.listar();
     }
 
     @Override
     public List<Categoria> buscarCategorias(String texto) throws Exception {
-        throw new UnsupportedOperationException("Pendiente: buscarCategorias");
+        return categorias.buscar(texto);
     }
 
     @Override
     public Categoria crearCategoria(String descripcion) throws Exception {
-        throw new UnsupportedOperationException("Pendiente: crearCategoria");
+        return categorias.crear(descripcion);
     }
 
     @Override
     public void modificarCategoria(String id, String descripcion) throws Exception {
-        throw new UnsupportedOperationException("Pendiente: modificarCategoria");
+        categorias.modificar(id, descripcion);
     }
 
     @Override
     public void borrarCategoria(String id) throws Exception {
-        throw new UnsupportedOperationException("Pendiente: borrarCategoria");
+        categorias.borrar(id);
     }
 
     // Recursos

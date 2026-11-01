@@ -6,8 +6,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import servicios.GestorXML;
+
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -27,11 +30,11 @@ class RecursoControllerTest {
         String rutaRecursos = tempDir.resolve("recursos.xml").toString();
         String rutaCategorias = tempDir.resolve("categorias.xml").toString();
 
-        // Se reutiliza CategoriaController real para precargar categorías
-        // de prueba, en vez de escribir el XML a mano.
-        CategoriaController categoriaController = new CategoriaController(rutaCategorias);
-        catSala = categoriaController.crear("Sala para 10 personas");
-        catLaptop = categoriaController.crear("Laptop windows 11");
+        // CategoriaController ahora habla con el Backend (sockets + Oracle), así que para esta
+        // prueba del RecursoController con XML las categorías se escriben directo en el archivo.
+        catSala = categoria("CAT-001", "Sala para 10 personas");
+        catLaptop = categoria("CAT-002", "Laptop windows 11");
+        new GestorXML().guardarDatos(new ArrayList<>(List.of(catSala, catLaptop)), rutaCategorias);
 
         controller = new RecursoController(rutaRecursos, rutaCategorias);
     }
@@ -191,5 +194,12 @@ class RecursoControllerTest {
         List<Recurso> restantes = controller.listar();
         assertEquals(1, restantes.size());
         assertEquals("R2", restantes.get(0).getId());
+    }
+
+    private static Categoria categoria(String id, String descripcion) {
+        Categoria c = new Categoria();
+        c.setId(id);
+        c.setDescripcion(descripcion);
+        return c;
     }
 }

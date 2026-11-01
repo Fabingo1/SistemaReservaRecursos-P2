@@ -4,7 +4,6 @@ import controladores.LoginController;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
 
 // El id llega ya escrito desde LoginView, por lo que aquí solo se piden las claves.
 public class CambiarClaveDialog extends JDialog {
@@ -85,11 +84,9 @@ public class CambiarClaveDialog extends JDialog {
             JOptionPane.showMessageDialog(this, "Clave actualizada correctamente.",
                     "Éxito", JOptionPane.INFORMATION_MESSAGE);
             dispose();
-        } catch (IllegalArgumentException ex) {
+        } catch (Exception ex) {
+            // Las validaciones (clave actual, largo mínimo, etc.) las hace el Backend y llegan como mensaje
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        } catch (IOException ex) {
-            JOptionPane.showMessageDialog(this, "Error al guardar la clave: " + ex.getMessage(),
-                    "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

@@ -5,7 +5,6 @@ import modelo.Usuario;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
 
 public class LoginView extends JFrame {
 
@@ -94,8 +93,9 @@ public class LoginView extends JFrame {
                 main.setVisible(true);
             });
 
-        } catch (IOException ex) {
-            JOptionPane.showMessageDialog(this, "Error al leer datos: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "No se pudo comunicar con el servidor: " + ex.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 

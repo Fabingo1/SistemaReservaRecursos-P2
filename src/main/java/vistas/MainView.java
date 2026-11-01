@@ -4,12 +4,17 @@ import controladores.LoginController;
 import modelo.Administrador;
 import modelo.Funcionario;
 import modelo.Usuario;
+import servicios.IService;
+import servicios.ServiceProxy;
+import servicios.ServicioRemoto;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
 
 // Muestra las pestañas según el rol: Administrador ve Funcionarios/Categorías/Recursos,
 // Funcionario ve Reservas; ambos comparten Calendarización, Actividades y Estadísticas.
+// A la derecha va el área de Alertas, siempre visible sin importar la pestaña.
 public class MainView extends JFrame {
 
     public MainView(Usuario usuario) {
@@ -19,7 +24,7 @@ public class MainView extends JFrame {
                 ? ((Funcionario) usuario).getNombre() : usuario.getId();
 
         setTitle("SISTEMA DE RESERVA DE RECURSOS - " + nombre + " (" + rol + ")");
-        setSize(1050, 720);
+        setSize(1350, 720);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
@@ -31,6 +36,11 @@ public class MainView extends JFrame {
                 new CambiarClaveDialog(this, new LoginController(), usuario.getId()).setVisible(true));
         JButton btnSalir = new JButton("🚪 Cerrar sesión");
         btnSalir.addActionListener(e -> {
+            try {
+                new LoginController().logout(); // el Backend olvida la sesión y deja de mandar alertas
+            } catch (Exception ex) {
+                // Si el servidor no responde, igual se vuelve al login
+            }
             dispose();
             new LoginView().setVisible(true);
         });
@@ -81,5 +91,24 @@ public class MainView extends JFrame {
         });
 
         add(tabs, BorderLayout.CENTER);
+
+        AlertasPanel alertas = new AlertasPanel();
+        add(alertas, BorderLayout.EAST);
+        iniciarAlertas(alertas);
+    }
+
+    /** Abre el segundo socket (el de alertas). Las alertas llegan en otro hilo y el panel las pasa a Swing. */
+    private void iniciarAlertas(AlertasPanel panel) {
+        IService service = ServicioRemoto.get();
+        if (!(service instanceof ServiceProxy)) {
+            return; // p. ej. pruebas sin servidor
+        }
+        try {
+            ((ServiceProxy) service).escucharAlertas(panel::agregarDesdeOtroHilo);
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, "No se pudo abrir el canal de alertas: " + e.getMessage()
+                    + "\nLa aplicación funciona, pero no se mostrarán reservas de otros usuarios.",
+                    "Alertas", JOptionPane.WARNING_MESSAGE);
+        }
     }
 }

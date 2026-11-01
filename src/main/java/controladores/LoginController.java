@@ -1,90 +1,42 @@
 package controladores;
 
-import modelo.Administrador;
-import modelo.Funcionario;
 import modelo.Usuario;
-import servicios.GestorXML;
+import servicios.IService;
+import servicios.ServicioRemoto;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-
+// Frontend: la validación de usuario y clave se hace en el Backend (ServicioLogin);
+// aquí solo se llama al IService, que en ejecución normal es el ServiceProxy.
 public class LoginController {
 
-    private final String rutaAdmins;
-    private final String rutaFuncionarios;
-
-    private final GestorXML gestorXML;
+    private final IService service; // null = usar ServicioRemoto
 
     public LoginController() {
-        this("data");
+        this(null);
     }
 
-    /** Permite usar otra carpeta de datos (pruebas con @TempDir). */
-    public LoginController(String carpetaDatos) {
-        this.rutaAdmins = new File(carpetaDatos, "administradores.xml").getPath();
-        this.rutaFuncionarios = new File(carpetaDatos, "funcionarios.xml").getPath();
-        this.gestorXML = new GestorXML();
+    /** Para pruebas con un IService falso. */
+    public LoginController(IService service) {
+        this.service = service;
     }
 
-    public Usuario autenticar(String id, String clave) throws IOException {
-        if (id == null || clave == null) {
+    /** Devuelve el usuario (sin clave) o null si el id o la clave no coinciden. */
+    public Usuario autenticar(String id, String clave) throws Exception {
+        if (id == null || id.isBlank() || clave == null || clave.isEmpty()) {
             return null;
         }
-        id = id.trim();
-        List<Administrador> admins = gestorXML.cargarDatos(rutaAdmins);
-        for (Administrador a : admins) {
-            if (a.getId().equals(id) && a.getClave().equals(clave)) {
-                return a;
-            }
-        }
-
-        List<Funcionario> funcionarios = gestorXML.cargarDatos(rutaFuncionarios);
-        for (Funcionario f : funcionarios) {
-            if (f.getId().equals(id) && f.getClave().equals(clave)) {
-                return f;
-            }
-        }
-
-        return null;
+        return service().login(id.trim(), clave);
     }
 
-    public void cambiarClave(String id, String claveActual, String claveNueva) throws IOException {
-        if (claveNueva == null || claveNueva.isBlank()) {
-            throw new IllegalArgumentException("La clave nueva no puede estar vacía.");
-        }
-        if (claveNueva.length() < 4) {
-            throw new IllegalArgumentException("La clave nueva debe tener al menos 4 caracteres.");
-        }
-        if (claveNueva.equals(claveActual)) {
-            throw new IllegalArgumentException("La clave nueva debe ser distinta de la actual.");
-        }
-        List<Administrador> admins = gestorXML.cargarDatos(rutaAdmins);
-        for (Administrador a : admins) {
-            if (a.getId().equals(id)) {
-                validarClaveActual(a, claveActual);
-                a.cambiarClave(claveNueva);
-                gestorXML.guardarDatos(admins, rutaAdmins);
-                return;
-            }
-        }
-
-        List<Funcionario> funcionarios = gestorXML.cargarDatos(rutaFuncionarios);
-        for (Funcionario f : funcionarios) {
-            if (f.getId().equals(id)) {
-                validarClaveActual(f, claveActual);
-                f.cambiarClave(claveNueva);
-                gestorXML.guardarDatos(funcionarios, rutaFuncionarios);
-                return;
-            }
-        }
-
-        throw new IllegalArgumentException("No se encontró un usuario con ese id.");
+    public void cambiarClave(String id, String claveActual, String claveNueva) throws Exception {
+        service().cambiarClave(id, claveActual, claveNueva);
     }
 
-    private void validarClaveActual(Usuario usuario, String claveActual) {
-        if (!usuario.getClave().equals(claveActual)) {
-            throw new IllegalArgumentException("La clave actual no es correcta.");
-        }
+    /** Avisa al Backend que se cerró la sesión (deja de recibir alertas). */
+    public void logout() throws Exception {
+        service().logout();
+    }
+
+    private IService service() {
+        return service != null ? service : ServicioRemoto.get();
     }
 }

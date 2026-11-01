@@ -9,7 +9,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 public class CategoriaView extends JPanel implements Refrescable {
@@ -144,7 +143,7 @@ public class CategoriaView extends JPanel implements Refrescable {
         try {
             List<Categoria> resultado = controller.buscarPorDescripcion(txtBusqueda.getText());
             cargarTabla(resultado);
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             mostrarError("Error al buscar categorías", ex);
         }
     }
@@ -159,10 +158,9 @@ public class CategoriaView extends JPanel implements Refrescable {
             }
             limpiar();
             buscar(); // refresca el listado respetando el filtro de búsqueda actual
-        } catch (IllegalArgumentException ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Datos inválidos", JOptionPane.WARNING_MESSAGE);
-        } catch (IOException ex) {
-            mostrarError("Error al guardar la categoría", ex);
+        } catch (Exception ex) {
+            // Las validaciones las hace el Backend y llegan como mensaje
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "No se pudo guardar", JOptionPane.WARNING_MESSAGE);
         }
     }
 
@@ -183,10 +181,8 @@ public class CategoriaView extends JPanel implements Refrescable {
             controller.borrar(idSeleccionado);
             limpiar();
             buscar();
-        } catch (IllegalArgumentException ex) {
+        } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "No se pudo borrar", JOptionPane.WARNING_MESSAGE);
-        } catch (IOException ex) {
-            mostrarError("Error al borrar la categoría", ex);
         }
     }
 
@@ -218,7 +214,7 @@ public class CategoriaView extends JPanel implements Refrescable {
 
             controller.generarReportePDF(categorias, ruta);
             JOptionPane.showMessageDialog(this, "Reporte generado en:\n" + ruta);
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             mostrarError("Error al generar el reporte PDF", ex);
         }
     }
@@ -248,7 +244,7 @@ public class CategoriaView extends JPanel implements Refrescable {
     private List<Categoria> obtenerTodasOMostrarError() {
         try {
             return controller.listar();
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             mostrarError("Error al cargar categorías", ex);
             return List.of();
         }
