@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 // El id queda bloqueado al seleccionar un recurso existente porque RecursoController no permite cambiarlo.
+// Las validaciones de negocio (id duplicado, categoría inexistente, reservas futuras) las hace el
+// Backend (ServicioRecursos) y llegan aquí como el mensaje de una Exception genérica.
 public class RecursoView extends JPanel implements Refrescable {
 
     private final RecursoController controller;
@@ -171,7 +173,7 @@ public class RecursoView extends JPanel implements Refrescable {
             Categoria categoria = (Categoria) cbCategoriaFiltro.getSelectedItem();
             String texto = txtBusquedaDescripcion.getText();
             cargarTabla(controller.buscar(categoria, texto));
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             mostrarError("Error al buscar recursos", ex);
         }
     }
@@ -187,11 +189,10 @@ public class RecursoView extends JPanel implements Refrescable {
                 controller.modificar(idSeleccionado, categoria, descripcion);
             }
             limpiar();
-            buscar();
-        } catch (IllegalArgumentException ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Datos inválidos", JOptionPane.WARNING_MESSAGE);
-        } catch (IOException ex) {
-            mostrarError("Error al guardar el recurso", ex);
+            buscar(); // refresca el listado respetando el filtro de búsqueda actual
+        } catch (Exception ex) {
+            // Las validaciones las hace el Backend y llegan como mensaje
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "No se pudo guardar", JOptionPane.WARNING_MESSAGE);
         }
     }
 
@@ -212,10 +213,8 @@ public class RecursoView extends JPanel implements Refrescable {
             controller.borrar(idSeleccionado);
             limpiar();
             buscar();
-        } catch (IllegalArgumentException ex) {
+        } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "No se pudo borrar", JOptionPane.WARNING_MESSAGE);
-        } catch (IOException ex) {
-            mostrarError("Error al borrar el recurso", ex);
         }
     }
 
@@ -228,6 +227,7 @@ public class RecursoView extends JPanel implements Refrescable {
         tablaListado.clearSelection();
     }
 
+    // Genera el PDF en la máquina del usuario; esto no pasa por el Backend ni por el IService.
     private void imprimir() {
         try {
             if (resultadosActuales.isEmpty()) {
@@ -294,7 +294,7 @@ public class RecursoView extends JPanel implements Refrescable {
                 }
                 return etiqueta;
             });
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             mostrarError("Error al cargar categorías", ex);
         }
     }
