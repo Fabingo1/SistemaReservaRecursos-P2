@@ -108,11 +108,9 @@ public class EstadisticasView extends JPanel {
                 modeloTablaRecursos.addRow(new Object[]{e.getKey(), e.getValue()});
             }
             chartRecursos.setDatos(datosRecursosActuales);
-        } catch (IllegalArgumentException ex) {
+        } catch (Exception ex) {
+            // Las validaciones las hace el Backend y llegan como mensaje
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        } catch (IOException ex) {
-            JOptionPane.showMessageDialog(this, "Error al leer las reservas: " + ex.getMessage(),
-                    "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -203,11 +201,9 @@ public class EstadisticasView extends JPanel {
                 modeloTablaActividades.addRow(new Object[]{e.getKey(), e.getValue()});
             }
             chartActividades.setDatos(datosActividadesActuales);
-        } catch (IllegalArgumentException ex) {
+        } catch (Exception ex) {
+            // Las validaciones las hace el Backend y llegan como mensaje
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        } catch (IOException ex) {
-            JOptionPane.showMessageDialog(this, "Error al leer las reservas: " + ex.getMessage(),
-                    "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 

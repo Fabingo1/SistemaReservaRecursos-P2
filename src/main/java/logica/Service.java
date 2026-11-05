@@ -17,6 +17,7 @@ public class Service implements IService {
     private final ServicioCategorias categorias = new ServicioCategorias();
     private final ServicioRecursos recursos = new ServicioRecursos();
     private final ServicioConsultaReservas consultaReservas = new ServicioConsultaReservas();
+    private final ServicioEstadisticas estadisticas = new ServicioEstadisticas();
 
     // Login
     @Override
@@ -142,11 +143,11 @@ public class Service implements IService {
 
     @Override
     public Map<String, Integer> estadisticasRecursos(Date desde, Date hasta) throws Exception {
-        throw new UnsupportedOperationException("Pendiente: estadisticasRecursos");
+        return estadisticas.estadisticasRecursos(desde, hasta);
     }
 
     @Override
     public Map<String, Integer> estadisticasActividades(Date desde, Date hasta) throws Exception {
-        throw new UnsupportedOperationException("Pendiente: estadisticasActividades");
+        return estadisticas.estadisticasActividades(desde, hasta);
     }
 }
