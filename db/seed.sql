@@ -1,5 +1,17 @@
--- Datos de prueba. Ejecutar como "reservas" después de schema.sql.
+-- Datos de prueba. Ejecutar con F5 DESPUÉS de schema.sql, conectado como system (o como reservas).
 -- Usuarios: admin1/admin1 (administrador), func1/func1 y func2/func2 (funcionarios).
+-- Se puede correr varias veces: primero borra TODOS los datos y luego vuelve a cargar los de prueba
+-- (sirve para dejar la base de datos "como nueva" sin recrear las tablas).
+
+ALTER SESSION SET CURRENT_SCHEMA = reservas;
+
+-- Borrado previo (de hijas a padres, por las llaves foráneas)
+DELETE FROM detalle_reserva;
+DELETE FROM reserva;
+DELETE FROM recurso;
+DELETE FROM categoria;
+DELETE FROM funcionario;
+DELETE FROM administrador;
 
 INSERT INTO administrador (id, clave) VALUES ('admin1', 'admin1');
 
