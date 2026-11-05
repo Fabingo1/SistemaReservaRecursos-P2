@@ -1,41 +1,31 @@
 package controladores;
 
 import modelo.Reserva;
-import servicios.GestorXML;
+import servicios.IService;
 import servicios.PDFService;
+import servicios.ServicioRemoto;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+// Frontend: las reservas de la semana las pide el Backend por el IService (solo ACTIVAS, ya filtradas
+// por rango de fechas). Calcular la semana (lunes a domingo) y qué actividad ocupa cada celda se hace
+// aquí, en el cliente. El PDF también se genera aquí, en la máquina del usuario.
 public class ActividadesController {
 
-    private final String rutaReservas;
-    private final GestorXML gestorXML;
-    private final PDFService pdfService;
+    private final IService service; // null = usar ServicioRemoto
+    private final PDFService pdfService = new PDFService();
 
     public ActividadesController() {
-        this("data");
+        this(null);
     }
 
-    public ActividadesController(String carpetaDatos) {
-        this.rutaReservas = new File(carpetaDatos, "reservas.xml").getPath();
-        this.gestorXML = new GestorXML();
-        this.pdfService = new PDFService();
-    }
-
-    public List<Reserva> cargarReservasActivas() throws IOException {
-        List<Reserva> todas = gestorXML.cargarDatos(rutaReservas);
-        List<Reserva> activas = new ArrayList<>();
-        for (Reserva r : todas) {
-            if (r.estaActiva()) {
-                activas.add(r);
-            }
-        }
-        return activas;
+    /** Para pruebas con un IService falso. */
+    public ActividadesController(IService service) {
+        this.service = service;
     }
 
     public Date obtenerLunesDeSemana(Date fecha) {
@@ -61,22 +51,12 @@ public class ActividadesController {
         return dias;
     }
 
-    public List<Reserva> obtenerReservasSemana(Date fechaReferencia) throws IOException {
-        Date lunes = obtenerLunesDeSemana(fechaReferencia);
-        Calendar calFin = Calendar.getInstance();
-        calFin.setTime(lunes);
-        calFin.add(Calendar.DAY_OF_MONTH, 7);
-        Date finSemanaExclusivo = calFin.getTime();
-
-        List<Reserva> resultado = new ArrayList<>();
-        for (Reserva r : cargarReservasActivas()) {
-            if (r.getFecha() == null) continue;
-            Date dia = truncarADia(r.getFecha());
-            if (!dia.before(lunes) && dia.before(finSemanaExclusivo)) {
-                resultado.add(r);
-            }
-        }
-        return resultado;
+    /** Reservas activas de la semana (lunes a domingo, ambos incluidos) de la fecha de referencia. */
+    public List<Reserva> obtenerReservasSemana(Date fechaReferencia) throws Exception {
+        List<Date> dias = obtenerDiasDeSemana(fechaReferencia);
+        Date lunes = dias.get(0);
+        Date domingo = dias.get(6);
+        return service().obtenerReservasEntre(lunes, domingo);
     }
 
     public boolean ocurreEn(Reserva r, Date dia, int hora) {
@@ -93,17 +73,14 @@ public class ActividadesController {
         pdfService.generarReporte(titulo, columnas, filas, rutaSalida);
     }
 
-    private Date truncarADia(Date fecha) {
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(fecha);
-        limpiarHora(cal);
-        return cal.getTime();
-    }
-
     private void limpiarHora(Calendar cal) {
         cal.set(Calendar.HOUR_OF_DAY, 0);
         cal.set(Calendar.MINUTE, 0);
         cal.set(Calendar.SECOND, 0);
         cal.set(Calendar.MILLISECOND, 0);
+    }
+
+    private IService service() {
+        return service != null ? service : ServicioRemoto.get();
     }
 }

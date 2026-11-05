@@ -119,7 +119,7 @@ public class ActividadesView extends JPanel implements Refrescable {
 
         try {
             reservasSemanaActual = controller.obtenerReservasSemana(fechaSeleccionada);
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Error al leer las reservas: " + ex.getMessage(),
                     "Error", JOptionPane.ERROR_MESSAGE);
             reservasSemanaActual = new ArrayList<>();
