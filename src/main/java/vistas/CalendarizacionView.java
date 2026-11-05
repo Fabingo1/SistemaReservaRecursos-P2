@@ -111,7 +111,7 @@ public class CalendarizacionView extends JPanel implements Refrescable {
             for (Categoria c : controller.obtenerCategorias()) {
                 cbCategoria.addItem(c);
             }
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Error al cargar categorías: " + ex.getMessage(),
                     "Error", JOptionPane.ERROR_MESSAGE);
         }
@@ -155,7 +155,7 @@ public class CalendarizacionView extends JPanel implements Refrescable {
                 tablaMatriz.scrollRectToVisible(celda);
             });
 
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Error al leer los datos: " + ex.getMessage(),
                     "Error", JOptionPane.ERROR_MESSAGE);
         }

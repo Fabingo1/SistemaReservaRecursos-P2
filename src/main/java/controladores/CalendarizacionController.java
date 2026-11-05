@@ -4,61 +4,42 @@ import modelo.Categoria;
 import modelo.DetalleReserva;
 import modelo.Recurso;
 import modelo.Reserva;
-import servicios.GestorXML;
+import servicios.IService;
 import servicios.PDFService;
+import servicios.ServicioRemoto;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+// Frontend: los datos vienen del Backend por el IService. La lógica de la matriz (qué reserva ocupa
+// cada celda) se calcula aquí, en el cliente, con las reservas del día que ya recibió. El PDF también
+// se genera aquí, en la máquina del usuario.
 public class CalendarizacionController {
 
-    private final String rutaCategorias;
-    private final String rutaRecursos;
-    private final String rutaReservas;
-
-    private final GestorXML gestorXML;
-    private final PDFService pdfService;
+    private final IService service; // null = usar ServicioRemoto
+    private final PDFService pdfService = new PDFService();
 
     public CalendarizacionController() {
-        this("data");
+        this(null);
     }
 
-    // Permite usar otra carpeta de datos
-    public CalendarizacionController(String carpetaDatos) {
-        this.rutaCategorias = new File(carpetaDatos, "categorias.xml").getPath();
-        this.rutaRecursos = new File(carpetaDatos, "recursos.xml").getPath();
-        this.rutaReservas = new File(carpetaDatos, "reservas.xml").getPath();
-        this.gestorXML = new GestorXML();
-        this.pdfService = new PDFService();
+    /** Para pruebas con un IService falso. */
+    public CalendarizacionController(IService service) {
+        this.service = service;
     }
 
-    public List<Categoria> obtenerCategorias() throws IOException {
-        return gestorXML.cargarDatos(rutaCategorias);
+    public List<Categoria> obtenerCategorias() throws Exception {
+        return service().listarCategorias();
     }
 
-    public List<Recurso> obtenerRecursosPorCategoria(Categoria categoria) throws IOException {
-        List<Recurso> todos = gestorXML.cargarDatos(rutaRecursos);
-        List<Recurso> filtrados = new ArrayList<>();
-        for (Recurso r : todos) {
-            if (r.getCategoria() != null && r.getCategoria().getId().equals(categoria.getId())) {
-                filtrados.add(r);
-            }
-        }
-        return filtrados;
+    public List<Recurso> obtenerRecursosPorCategoria(Categoria categoria) throws Exception {
+        return service().buscarRecursos(categoria, null);
     }
 
-    public List<Reserva> obtenerReservasDelDia(Date fecha) throws IOException {
-        List<Reserva> todas = gestorXML.cargarDatos(rutaReservas);
-        List<Reserva> delDia = new ArrayList<>();
-        for (Reserva r : todas) {
-            if (r.estaActiva() && r.esDelDia(fecha)) {
-                delDia.add(r);
-            }
-        }
-        return delDia;
+    /** El Backend solo devuelve reservas ACTIVAS; un solo día = misma fecha como desde y hasta. */
+    public List<Reserva> obtenerReservasDelDia(Date fecha) throws Exception {
+        return service().obtenerReservasEntre(fecha, fecha);
     }
 
     public Reserva buscarReservaEnCelda(List<Reserva> reservasDelDia, Recurso recurso, int hora) {
@@ -82,5 +63,9 @@ public class CalendarizacionController {
     public void generarReportePDF(String titulo, String[] columnas, List<Object[]> filas, String rutaSalida)
             throws IOException {
         pdfService.generarReporte(titulo, columnas, filas, rutaSalida);
+    }
+
+    private IService service() {
+        return service != null ? service : ServicioRemoto.get();
     }
 }

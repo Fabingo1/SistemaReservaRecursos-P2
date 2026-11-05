@@ -15,6 +15,8 @@ public class Service implements IService {
     private final ServicioReservas reservas = new ServicioReservas();
     private final ServicioLogin login = new ServicioLogin();
     private final ServicioCategorias categorias = new ServicioCategorias();
+    private final ServicioRecursos recursos = new ServicioRecursos();
+    private final ServicioConsultaReservas consultaReservas = new ServicioConsultaReservas();
 
     // Login
     @Override
@@ -87,27 +89,27 @@ public class Service implements IService {
     // Recursos
     @Override
     public List<Recurso> buscarRecursos(Categoria categoria, String texto) throws Exception {
-        throw new UnsupportedOperationException("Pendiente: buscarRecursos");
+        return recursos.buscar(categoria, texto);
     }
 
     @Override
     public List<Recurso> listarRecursos() throws Exception {
-        throw new UnsupportedOperationException("Pendiente: listarRecursos");
+        return recursos.listar();
     }
 
     @Override
     public Recurso crearRecurso(String id, Categoria categoria, String descripcion) throws Exception {
-        throw new UnsupportedOperationException("Pendiente: crearRecurso");
+        return recursos.crear(id, categoria, descripcion);
     }
 
     @Override
     public void modificarRecurso(String id, Categoria categoria, String descripcion) throws Exception {
-        throw new UnsupportedOperationException("Pendiente: modificarRecurso");
+        recursos.modificar(id, categoria, descripcion);
     }
 
     @Override
     public void borrarRecurso(String id) throws Exception {
-        throw new UnsupportedOperationException("Pendiente: borrarRecurso");
+        recursos.borrar(id);
     }
 
     // Reservas
@@ -135,7 +137,7 @@ public class Service implements IService {
     // Calendarización, Actividades y Estadísticas
     @Override
     public List<Reserva> obtenerReservasEntre(Date desde, Date hasta) throws Exception {
-        throw new UnsupportedOperationException("Pendiente: obtenerReservasEntre");
+        return consultaReservas.obtenerReservasEntre(desde, hasta);
     }
 
     @Override
