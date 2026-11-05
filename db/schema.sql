@@ -1,5 +1,25 @@
 -- Esquema del Sistema de Reserva de Recursos (Oracle 11g XE)
--- Ejecutar conectado como el usuario "reservas". Se puede correr varias veces.
+--
+-- CÓMO EJECUTARLO (en SQL Developer basta con la conexión "system"):
+--   1. Conectarse como system (el usuario administrador que se crea al instalar Oracle).
+--   2. Abrir este archivo, elegir la conexión system y ejecutarlo con F5 ("Ejecutar script").
+--   3. Abrir seed.sql y ejecutarlo igual, con F5.
+--   Después: correr servidor.ServidorMain (Backend) y luego Main (Frontend).
+--
+-- Este script crea el usuario "reservas" (clave "reservas") si todavía no existe y crea todas
+-- las tablas DENTRO de ese usuario, aunque la conexión sea system. El Backend se conecta como reservas.
+-- Se puede correr varias veces: borra las tablas y las vuelve a crear vacías.
+-- También funciona conectado directamente como "reservas" (se salta la creación del usuario).
+
+-- 1) Usuario (esquema) del proyecto. Si ya existe, o si no hay permiso para crearlo, se ignora el error.
+--    En Oracle cada usuario tiene su propio esquema: es el equivalente a "CREATE DATABASE" de MySQL.
+BEGIN EXECUTE IMMEDIATE 'CREATE USER reservas IDENTIFIED BY reservas'; EXCEPTION WHEN OTHERS THEN NULL; END;
+/
+BEGIN EXECUTE IMMEDIATE 'GRANT CONNECT, RESOURCE, UNLIMITED TABLESPACE TO reservas'; EXCEPTION WHEN OTHERS THEN NULL; END;
+/
+
+-- 2) Desde aquí, todo se crea dentro del usuario reservas
+ALTER SESSION SET CURRENT_SCHEMA = reservas;
 
 -- Borrado previo (ignora el error si la tabla no existe)
 BEGIN EXECUTE IMMEDIATE 'DROP TABLE detalle_reserva CASCADE CONSTRAINTS'; EXCEPTION WHEN OTHERS THEN NULL; END;
