@@ -73,7 +73,7 @@ public class LoginView extends JFrame {
         String clave = new String(txtClave.getPassword());
 
         if (id.isBlank() || clave.isBlank()) {
-            JOptionPane.showMessageDialog(this, "Debe ingresar id y clave.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Debe ingresar id y clave.", "Aviso", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -81,7 +81,7 @@ public class LoginView extends JFrame {
             Usuario usuario = controller.autenticar(id, clave);
 
             if (usuario == null) {
-                JOptionPane.showMessageDialog(this, "Id o clave incorrectos.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Id o clave incorrectos.", "Aviso", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
@@ -93,6 +93,8 @@ public class LoginView extends JFrame {
                 main.setVisible(true);
             });
 
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Aviso", JOptionPane.WARNING_MESSAGE);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "No se pudo comunicar con el servidor: " + ex.getMessage(),
                     "Error", JOptionPane.ERROR_MESSAGE);

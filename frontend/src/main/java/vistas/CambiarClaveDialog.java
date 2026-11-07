@@ -70,12 +70,12 @@ public class CambiarClaveDialog extends JDialog {
 
         if (claveActual.isBlank() || claveNueva.isBlank() || confirmacion.isBlank()) {
             JOptionPane.showMessageDialog(this, "Debe llenar todos los campos.",
-                    "Error", JOptionPane.ERROR_MESSAGE);
+                    "Aviso", JOptionPane.WARNING_MESSAGE);
             return;
         }
         if (!claveNueva.equals(confirmacion)) {
             JOptionPane.showMessageDialog(this, "La clave nueva y su confirmación no coinciden.",
-                    "Error", JOptionPane.ERROR_MESSAGE);
+                    "Aviso", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -84,9 +84,12 @@ public class CambiarClaveDialog extends JDialog {
             JOptionPane.showMessageDialog(this, "Clave actualizada correctamente.",
                     "Éxito", JOptionPane.INFORMATION_MESSAGE);
             dispose();
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            // Validaciones del Backend (clave actual incorrecta, largo mínimo, etc.): aviso
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Aviso", JOptionPane.WARNING_MESSAGE);
         } catch (Exception ex) {
-            // Las validaciones (clave actual, largo mínimo, etc.) las hace el Backend y llegan como mensaje
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "No se pudo cambiar la clave: " + ex.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

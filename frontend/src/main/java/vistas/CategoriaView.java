@@ -159,8 +159,7 @@ public class CategoriaView extends JPanel implements Refrescable {
             limpiar();
             buscar(); // refresca el listado respetando el filtro de búsqueda actual
         } catch (Exception ex) {
-            // Las validaciones las hace el Backend y llegan como mensaje
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "No se pudo guardar", JOptionPane.WARNING_MESSAGE);
+            mostrarError("No se pudo guardar", ex);
         }
     }
 
@@ -182,7 +181,7 @@ public class CategoriaView extends JPanel implements Refrescable {
             limpiar();
             buscar();
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "No se pudo borrar", JOptionPane.WARNING_MESSAGE);
+            mostrarError("No se pudo borrar", ex);
         }
     }
 
@@ -250,8 +249,11 @@ public class CategoriaView extends JPanel implements Refrescable {
         }
     }
 
+    /** Validaciones del Backend (descripción repetida, categoría con recursos...) como aviso; lo demás como error. */
     private void mostrarError(String titulo, Exception ex) {
-        JOptionPane.showMessageDialog(this, ex.getMessage(), titulo, JOptionPane.ERROR_MESSAGE);
+        boolean esValidacion = ex instanceof IllegalArgumentException || ex instanceof IllegalStateException;
+        JOptionPane.showMessageDialog(this, ex.getMessage(), titulo,
+                esValidacion ? JOptionPane.WARNING_MESSAGE : JOptionPane.ERROR_MESSAGE);
     }
 
 

@@ -76,8 +76,12 @@ public class Worker extends Thread {
                             && ((ResultadoReserva) datos).isExitosa()) {
                         paraAvisar = ((ResultadoReserva) datos).getReserva();
                     }
+                } catch (IllegalArgumentException e) {
+                    respuesta = Respuesta.error(mensajeDe(e), Respuesta.TipoError.VALIDACION);
+                } catch (IllegalStateException e) {
+                    respuesta = Respuesta.error(mensajeDe(e), Respuesta.TipoError.ESTADO);
                 } catch (Exception e) {
-                    respuesta = Respuesta.error(mensajeDe(e));
+                    respuesta = Respuesta.error(mensajeDe(e), Respuesta.TipoError.TECNICO);
                 }
 
                 enviar(respuesta);

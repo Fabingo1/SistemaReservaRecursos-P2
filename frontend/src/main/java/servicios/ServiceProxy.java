@@ -69,6 +69,15 @@ public class ServiceProxy implements IService {
             throw new IOException("Se perdió la conexión con el servidor. " + e.getMessage(), e);
         }
         if (!respuesta.isExito()) {
+            // Se vuelve a lanzar el mismo tipo de excepción que hubo en el Backend: así las vistas
+            // muestran las validaciones como aviso y solo los errores técnicos como error.
+            Respuesta.TipoError tipo = respuesta.getTipoError();
+            if (tipo == Respuesta.TipoError.VALIDACION) {
+                throw new IllegalArgumentException(respuesta.getError());
+            }
+            if (tipo == Respuesta.TipoError.ESTADO) {
+                throw new IllegalStateException(respuesta.getError());
+            }
             throw new Exception(respuesta.getError());
         }
         return respuesta.getDatos();

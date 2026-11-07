@@ -102,22 +102,32 @@ class ServidorIT {
     @Test
     void operacionSinLogin_esRechazadaPorElServidor() throws Exception {
         ServiceProxy proxy = conectar();
-        Exception e = assertThrows(Exception.class, proxy::listarCategorias);
+        Exception e = assertThrows(IllegalStateException.class, proxy::listarCategorias);
         assertTrue(e.getMessage().contains("iniciar sesión"));
     }
 
     @Test
-    void errorDelService_llegaAlFrontendConSuMensaje() throws Exception {
+    void errorDeValidacion_llegaComoIllegalArgumentExceptionConSuMensaje() throws Exception {
         ServiceProxy admin = conectarComo("admin1");
-        Exception e = assertThrows(Exception.class, () -> admin.crearCategoria("Sala"));
+        // IllegalArgumentException en el Backend -> la misma clase en el Frontend (la vista la muestra como aviso)
+        Exception e = assertThrows(IllegalArgumentException.class, () -> admin.crearCategoria("Sala"));
         assertEquals("Ya existe una categoría con la descripción \"Sala\".", e.getMessage());
+    }
+
+    @Test
+    void errorTecnico_noLlegaComoValidacion() throws Exception {
+        ServiceProxy admin = conectarComo("admin1");
+        // listarRecursos no está implementado en el Service falso: lanza UnsupportedOperationException
+        Exception e = assertThrows(Exception.class, admin::listarRecursos);
+        assertFalse(e instanceof IllegalArgumentException || e instanceof IllegalStateException,
+                "Un error técnico no debe mostrarse como aviso");
     }
 
     @Test
     void funcionario_noPuedeHacerOperacionesDeAdministrador() throws Exception {
         ServiceProxy func = conectarComo("func1");
         assertEquals(1, func.listarCategorias().size()); // leer sí puede
-        Exception e = assertThrows(Exception.class, () -> func.crearCategoria("Otra"));
+        Exception e = assertThrows(IllegalStateException.class, () -> func.crearCategoria("Otra"));
         assertTrue(e.getMessage().contains("administrador"));
     }
 
