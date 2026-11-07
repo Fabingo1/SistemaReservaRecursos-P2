@@ -6,8 +6,10 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="backend" />
         <module name="SistemaReservaRecursos" />
-        <module name="SistemaReservaRecursos-P2" />
+        <module name="comun" />
+        <module name="frontend" />
       </profile>
     </annotationProcessing>
   </component>

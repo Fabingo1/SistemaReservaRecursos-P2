@@ -4,54 +4,82 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <!-- Proyecto padre: solo agrupa los tres módulos y centraliza versiones y plugins -->
     <groupId>cr.ac.una.eif206</groupId>
     <artifactId>SistemaReservaRecursos-P2</artifactId>
     <version>1.0</version>
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>comun</module>     <!-- modelo, IService y protocolo: lo comparten los dos procesos -->
+        <module>backend</module>   <!-- servidor, lógica y datos (único que toca la BD) -->
+        <module>frontend</module>  <!-- vistas, controladores y Proxy (sin nada de BD) -->
+    </modules>
 
     <properties>
         <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>cr.ac.una.eif206</groupId>
+                <artifactId>comun</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cr.ac.una.eif206</groupId>
+                <artifactId>backend</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <!-- Parseo del JSON que devuelve el LLM -->
+            <dependency>
+                <groupId>org.json</groupId>
+                <artifactId>json</artifactId>
+                <version>20260814</version>
+            </dependency>
+            <!-- Driver JDBC de Oracle (compatible con 11g XE) -->
+            <dependency>
+                <groupId>com.oracle.database.jdbc</groupId>
+                <artifactId>ojdbc8</artifactId>
+                <version>19.25.0.0</version>
+            </dependency>
+            <!-- Generación de reportes PDF -->
+            <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>pdfbox</artifactId>
+                <version>3.0.8</version>
+            </dependency>
+            <dependency>
+                <groupId>com.formdev</groupId>
+                <artifactId>flatlaf</artifactId>
+                <version>3.7.2</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <!-- JUnit Jupiter en los tres módulos -->
     <dependencies>
-        <!-- Parseo del JSON que devuelve el LLM -->
-        <dependency>
-            <groupId>org.json</groupId>
-            <artifactId>json</artifactId>
-            <version>20260814</version>
-        </dependency>
-
-        <!-- Generación de reportes PDF -->
-        <dependency>
-            <groupId>org.apache.pdfbox</groupId>
-            <artifactId>pdfbox</artifactId>
-            <version>3.0.8</version>
-        </dependency>
-
-        <!-- JUnit Jupiter para pruebas unitarias e integración -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>5.14.4</version>
             <scope>test</scope>
         </dependency>
-
-        <dependency>
-            <groupId>com.formdev</groupId>
-            <artifactId>flatlaf</artifactId>
-            <version>3.7.2</version>
-        </dependency>
-
-        <!-- Driver JDBC de Oracle (compatible con 11g XE) -->
-        <dependency>
-            <groupId>com.oracle.database.jdbc</groupId>
-            <artifactId>ojdbc8</artifactId>
-            <version>19.25.0.0</version>
-        </dependency>
     </dependencies>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>3.5.1</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
         <plugins>
             <!-- Compila en Java 17 -->
             <plugin>
@@ -60,8 +88,7 @@
                 <version>3.15.0</version>
             </plugin>
 
-            <!-- Unitarios: corre en 'mvn test'. Por convención toma *Test.java
-                 y automáticamente IGNORA *IT.java, sin configurar nada extra -->
+            <!-- Unitarios: corre en 'mvn test'. Toma *Test.java e ignora *IT.java -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -69,8 +96,7 @@
             </plugin>
 
             <!-- Integración: corre en 'mvn verify', toma *IT.java.
-                 Este <executions> es obligatorio: sin él, Failsafe no se
-                 conecta al ciclo de vida de Maven y nunca se ejecuta -->
+                 El <executions> es obligatorio para conectarlo al ciclo de vida de Maven -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
@@ -83,20 +109,6 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-
-            <!-- Empaqueta el .jar ejecutable apuntando a Main -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.5.1</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>Main</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
             </plugin>
         </plugins>
     </build>
