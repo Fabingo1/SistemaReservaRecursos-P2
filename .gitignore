@@ -33,7 +33,7 @@ bin/
 target/
 .idea/
 *.iml
-data/*.xml
-data/*.pdf
+**/data/*.xml
+**/data/*.pdf
 *.pdf
 config.properties
