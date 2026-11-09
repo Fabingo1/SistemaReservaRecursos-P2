@@ -23,7 +23,7 @@ public class ActividadesController {
         this(null);
     }
 
-    /** Para pruebas con un IService falso. */
+
     public ActividadesController(IService service) {
         this.service = service;
     }
