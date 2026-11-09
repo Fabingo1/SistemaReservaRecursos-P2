@@ -2,6 +2,8 @@
 
 EIF206 Programación 3 · Universidad Nacional
 
+Repositorio: https://github.com/Fabingo1/SistemaReservaRecursos-P2
+
 ## Integrantes
 
 - Luis Fabiano Arroyo Castillo
